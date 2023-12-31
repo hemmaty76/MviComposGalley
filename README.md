@@ -9,6 +9,7 @@ This is a sample project that shows you how to set up your first clean architect
   layers and organize the threading
 - [Hilt](https://dagger.dev/hilt/) - Dependency Injection framework
 - [Compose](https://developer.android.com/jetpack/compose)
+- [Coil](https://coil-kt.github.io/coil/compose/)
 - [Navigation](https://developer.android.com/guide/navigation) - To navigate between fragments
 - [Paging](https://developer.android.com/topic/libraries/architecture/paging/v3-overview) - The
   Paging library integrates directly into the recommended Android app architecture.
