@@ -30,6 +30,13 @@ android {
                 "proguard-rules.pro"
             )
         }
+        debug {
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -68,7 +75,13 @@ dependencies {
 
     implementation("com.google.dagger:hilt-android:2.47")
     kapt("com.google.dagger:hilt-android-compiler:2.47")
+    implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
 
     implementation("io.coil-kt:coil-compose:2.5.0")
+
+
+    implementation("androidx.paging:paging-compose:3.3.0-alpha02")
+
+
 
 }
