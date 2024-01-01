@@ -11,6 +11,7 @@ import androidx.paging.PagingState
 import com.sisapp.compose.data.mediaStore.MediaStoreHealper
 import com.sisapp.compose.data.model.MediaModel
 import com.sisapp.compose.data.model.MediaType
+import kotlinx.coroutines.delay
 
 class MediaPagingSource(private val mediaStore: MediaStoreHealper) : PagingSource<Int, MediaModel>() {
 

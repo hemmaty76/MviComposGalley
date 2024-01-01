@@ -22,7 +22,7 @@ class GalleryRepositoryImpl @Inject constructor(val mediaStore: MediaStoreHealpe
     GalleryRepository {
     override fun getMedia(): Flow<PagingData<MediaItem>> =
         Pager(
-            config = PagingConfig(pageSize = PAGE_SIZE,initialLoadSize = PAGE_SIZE, enablePlaceholders = false),
+            config = PagingConfig(pageSize = PAGE_SIZE,initialLoadSize = PAGE_SIZE, enablePlaceholders = false, prefetchDistance = PAGE_SIZE),
             pagingSourceFactory = { MediaPagingSource(mediaStore) }
         ).flow.map { pagingData ->
             pagingData.map { media ->

@@ -24,7 +24,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -79,8 +79,12 @@ dependencies {
 
     implementation("io.coil-kt:coil-compose:2.5.0")
 
-
+//    implementation ("com.google.android.exoplayer:exoplayer:2.19.1") deprecated
+    implementation("androidx.media3:media3-exoplayer:1.2.0")
+    implementation("androidx.media3:media3-ui:1.2.0")
+    implementation ("com.github.iamjosephmj:Flinger:1.1.1")
     implementation("androidx.paging:paging-compose:3.3.0-alpha02")
+
 
 
 

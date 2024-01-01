@@ -76,7 +76,7 @@ class MediaStoreHealper(var context: Application) {
 
                 val thumbnail = try {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        context.contentResolver.loadThumbnail(mediaUri!!, Size(100, 100), null)
+                        context.contentResolver.loadThumbnail(mediaUri!!, Size(150, 150), null)
                     } else {
                         when (mediaType) {
                             MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE -> {
