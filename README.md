@@ -1,4 +1,4 @@
-This is a sample project that shows you how to set up your first clean architecture MVI project.
+This is a sample project.
 
 ##Features:
 
