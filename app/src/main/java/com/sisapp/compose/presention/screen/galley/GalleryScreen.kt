@@ -71,6 +71,7 @@ import com.sisapp.compose.presention.utils.PermissionUtils
 import io.iamjosephmj.flinger.bahaviours.StockFlingBehaviours
 import io.iamjosephmj.flinger.configs.FlingConfiguration
 import io.iamjosephmj.flinger.flings.flingBehavior
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 
 private lateinit var viewModel: GalleyViewModel
@@ -87,7 +88,6 @@ fun GalleryScreen(navController: NavHostController) {
     launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
         permissionState.value = !it.containsValue(false)
     }
-
     viewModel = hiltViewModel()
     focusItem = remember {
         mutableStateOf(null)
@@ -125,7 +125,6 @@ fun GalleryScreen(navController: NavHostController) {
             lifecycle.removeObserver(observer)
         }
     }
-
     if (permissionState.value) {
         Ui()
     } else {
@@ -155,7 +154,7 @@ fun ShowPermissionScreen() {
 @Composable
 fun Ui() {
 
-    val mediaPagingData = viewModel.observeListMedia().collectAsLazyPagingItems()
+    val mediaPagingData = viewModel.observeListMedia().collectAsLazyPagingItems(Dispatchers.IO)
     LazyVerticalGrid(
         columns = GridCells.Fixed(4),
         flingBehavior = flingBehavior(
@@ -179,9 +178,6 @@ fun Ui() {
             }
         })
 }
-
-var clickLoadVideo = false
-
 @OptIn(UnstableApi::class)
 @Composable
 fun LoadVideo(it: MediaItem) {
