@@ -175,7 +175,7 @@ fun Ui() {
                     if (it.type == MediaType.VIDEO) {
                         LoadVideo(it)
                     } else {
-                        LoadImage(it,true)
+                        LoadImageFilter(it)
                     }
                 }
             }
@@ -207,7 +207,7 @@ fun LoadVideo(it: MediaItem) {
         if (focusItem.value == it) {
             VideoPlayer(uri = it.uri)
         } else {
-            LoadImage(mediaItem = it, changeFilterWhenClick = false)
+            LoadImage(mediaItem = it)
         }
         Icon(
             imageVector = Icons.Outlined.PlayArrow,
@@ -257,7 +257,7 @@ fun VideoPlayer(uri: Uri) {
 
 @kotlin.OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun LoadImage(mediaItem: MediaItem, changeFilterWhenClick: Boolean) {
+fun LoadImageFilter(mediaItem: MediaItem) {
     val media = remember {
         mutableStateOf<Bitmap?>(null)
     }
@@ -285,15 +285,55 @@ fun LoadImage(mediaItem: MediaItem, changeFilterWhenClick: Boolean) {
             modifier = Modifier
                 .padding(2.dp)
                 .aspectRatio(1.0f)
-                .background(color = Color.Gray).apply {
-                    if (changeFilterWhenClick)
-                       clickable {
-                           media.value = mediaItem.changeFilter()
-                       }
+                .background(color = Color.Gray)
+                .clickable {
+                    media.value = mediaItem.changeFilter()
+
                 },
             model = media.value,
             contentScale = ContentScale.Crop,
-            contentDescription = null)
+            contentDescription = null
+        )
+    }
+
+
+}
+
+@kotlin.OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+fun LoadImage(mediaItem: MediaItem) {
+    val media = remember {
+        mutableStateOf<Bitmap?>(null)
+    }
+    val coroutineScope = rememberCoroutineScope()
+    DisposableEffect(mediaItem) {
+        val job = coroutineScope.launch {
+            delay(800)
+            media.value = mediaItem.getThumbnailFiltered()
+        }
+        onDispose {
+            job.cancel()
+        }
+    }
+
+    if (media.value == null) {
+        Spacer(
+            modifier = Modifier
+                .padding(2.dp)
+                .aspectRatio(1.0f)
+                .background(color = Color.Gray)
+        )
+
+    } else {
+        GlideImage(
+            modifier = Modifier
+                .padding(2.dp)
+                .aspectRatio(1.0f)
+                .background(color = Color.Gray),
+            model = media.value,
+            contentScale = ContentScale.Crop,
+            contentDescription = null
+        )
     }
 
 
