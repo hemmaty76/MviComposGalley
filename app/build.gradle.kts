@@ -22,6 +22,15 @@ android {
         }
     }
 
+    signingConfigs {
+        create("config") {
+            storeFile = file("mowj.jks")
+            storePassword = "Mhc0371835364"
+            keyAlias = "key0"
+            keyPassword = "Mhc0371835364"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -29,6 +38,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("config")
         }
         debug {
             isMinifyEnabled = false
@@ -78,6 +88,8 @@ dependencies {
     implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
 
     implementation("io.coil-kt:coil-compose:2.5.0")
+    implementation ("com.github.bumptech.glide:compose:1.0.0-beta01")
+
 
 //    implementation ("com.google.android.exoplayer:exoplayer:2.19.1") deprecated
     implementation("androidx.media3:media3-exoplayer:1.2.0")

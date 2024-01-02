@@ -1,16 +1,19 @@
 package com.sisapp.compose.presention.screen.galley
 
 import android.Manifest
+import android.graphics.Bitmap
+import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Build
+import android.service.autofill.Transformation
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,7 +26,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -32,13 +34,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -57,22 +60,24 @@ import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavHostController
-import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
+import coil.request.CachePolicy
 import coil.request.ImageRequest
-import com.sisapp.compose.R
+import com.bumptech.glide.RequestBuilder
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
+import com.bumptech.glide.integration.compose.GlidePreloadingData
 import com.sisapp.compose.data.model.MediaType
 import com.sisapp.compose.domin.model.MediaItem
-import com.sisapp.compose.presention.screen.viewmodel.GalleyIntent
-import com.sisapp.compose.presention.screen.viewmodel.GalleyState
 import com.sisapp.compose.presention.screen.viewmodel.GalleyViewModel
 import com.sisapp.compose.presention.utils.PermissionUtils
-import io.iamjosephmj.flinger.bahaviours.StockFlingBehaviours
 import io.iamjosephmj.flinger.configs.FlingConfiguration
 import io.iamjosephmj.flinger.flings.flingBehavior
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private lateinit var viewModel: GalleyViewModel
 private lateinit var exoPlayer: ExoPlayer
@@ -130,7 +135,6 @@ fun GalleryScreen(navController: NavHostController) {
     } else {
         ShowPermissionScreen()
     }
-
 }
 
 @Composable
@@ -150,20 +154,19 @@ fun ShowPermissionScreen() {
     }
 }
 
-
 @Composable
 fun Ui() {
 
-    val mediaPagingData = viewModel.observeListMedia().collectAsLazyPagingItems(Dispatchers.IO)
+    val mediaPagingData = viewModel.observeListMedia().collectAsLazyPagingItems(Dispatchers.Default)
     LazyVerticalGrid(
         columns = GridCells.Fixed(4),
-        flingBehavior = flingBehavior(
-            scrollConfiguration = FlingConfiguration.Builder()
-                .decelerationFriction(0.3f)
-                .scrollViewFriction(0.1f)
-                .splineInflection(.2f)
-                .build()
-        ),
+//        flingBehavior = flingBehavior(
+//            scrollConfiguration = FlingConfiguration.Builder()
+//                .decelerationFriction(0.3f)
+//                .scrollViewFriction(0.5f)
+//                .splineInflection(.2f)
+//                .build()
+//        ),
         content = {
             items(mediaPagingData.itemCount, key = {
                 mediaPagingData[it]!!.id
@@ -172,11 +175,13 @@ fun Ui() {
                     if (it.type == MediaType.VIDEO) {
                         LoadVideo(it)
                     } else {
-                        LoadImage(it)
+                        LoadImage(it,true)
                     }
                 }
             }
+
         })
+
 }
 @OptIn(UnstableApi::class)
 @Composable
@@ -184,6 +189,7 @@ fun LoadVideo(it: MediaItem) {
     Box(
         modifier = Modifier
             .padding(2.dp)
+            .background(color = Color.Gray)
             .aspectRatio(1.0f)
             .clickable {
                 if (focusItem.value == it) {
@@ -201,21 +207,8 @@ fun LoadVideo(it: MediaItem) {
         if (focusItem.value == it) {
             VideoPlayer(uri = it.uri)
         } else {
-            AsyncImage(
-                modifier = Modifier
-                    .padding(2.dp)
-                    .aspectRatio(1.0f),
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(it.thumbnail)
-                    .crossfade(true)
-                    .placeholder(R.drawable.placeholder)
-                    .build(),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-            )
+            LoadImage(mediaItem = it, changeFilterWhenClick = false)
         }
-
-
         Icon(
             imageVector = Icons.Outlined.PlayArrow,
             contentDescription = null,
@@ -231,8 +224,6 @@ fun LoadVideo(it: MediaItem) {
                 }
             }
         }
-
-
     }
 }
 
@@ -247,7 +238,7 @@ fun VideoPlayer(uri: Uri) {
         val source = ProgressiveMediaSource.Factory(dataSourceFactory)
             .createMediaSource(androidx.media3.common.MediaItem.fromUri(uri))
         playWhenReady = true
-        videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING
+        videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
         repeatMode = Player.REPEAT_MODE_ONE
         setMediaSource(source)
         prepare()
@@ -263,27 +254,47 @@ fun VideoPlayer(uri: Uri) {
     })
 }
 
+
+@kotlin.OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun LoadImage(it: MediaItem) {
+fun LoadImage(mediaItem: MediaItem, changeFilterWhenClick: Boolean) {
     val media = remember {
-        mutableStateOf(it.getThumbnailFiltered())
+        mutableStateOf<Bitmap?>(null)
     }
-    AsyncImage(
-        modifier = Modifier
-            .padding(2.dp)
-            .aspectRatio(1.0f)
-            .clickable {
-                media.value = it.changeFilter()
-            },
-        model = ImageRequest.Builder(LocalContext.current)
-            .data(media.value)
-            .allowHardware(true)
-            .crossfade(false)
-            .placeholder(R.drawable.placeholder)
-            .build(),
-        contentDescription = null,
-        contentScale = ContentScale.Crop,
-    )
+    val coroutineScope = rememberCoroutineScope()
+    DisposableEffect(mediaItem) {
+        val job = coroutineScope.launch {
+            delay(800)
+            media.value = mediaItem.getThumbnailFiltered()
+        }
+        onDispose {
+            job.cancel()
+        }
+    }
+
+    if (media.value == null) {
+        Spacer(
+            modifier = Modifier
+                .padding(2.dp)
+                .aspectRatio(1.0f)
+                .background(color = Color.Gray)
+        )
+
+    } else {
+        GlideImage(
+            modifier = Modifier
+                .padding(2.dp)
+                .aspectRatio(1.0f)
+                .background(color = Color.Gray).apply {
+                    if (changeFilterWhenClick)
+                       clickable {
+                           media.value = mediaItem.changeFilter()
+                       }
+                },
+            model = media.value,
+            contentScale = ContentScale.Crop,
+            contentDescription = null)
+    }
 
 
 }

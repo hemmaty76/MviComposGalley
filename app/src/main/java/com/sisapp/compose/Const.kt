@@ -1,3 +1,3 @@
 package com.sisapp.compose
 
-const val PAGE_SIZE = 40
+const val PAGE_SIZE = 20
